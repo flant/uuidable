@@ -24,5 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'travis', '~> 1.8', '>= 1.8.2'
 
-  spec.add_dependency 'activerecord', '>= 4.2'
+  spec.add_dependency 'activerecord', '>= 4.2', '< 5.1'
 end
