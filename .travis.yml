@@ -1,0 +1,17 @@
+language: ruby
+rvm:
+  - 2.2.4
+before_install: gem install bundler -v 1.11.2
+
+script:
+  - bundle exec rubocop
+  - bundle exec rspec
+
+deploy:
+  provider: rubygems
+  api_key:
+    secure: IS8mKByRG8lT2TkQJ/M+Dlia+UE1ridJQ4E704h5SmGtmU9A6yzeB1rZF4CuEV768StTcMNzvGSthFF8SByw+krA7vW4muQPFcNPswbA0d+0VRdCfO6oPJS5AFjVCN3H+zqY2PAqUiABE7O9hyYSNzxXOEsimKAUUYlkuXEqvFOsIHtG7vhZ0jNYSpsH1ABm6RlUwAWXODyHFR/Fte0MSA9BT4NQwTUT9rLAeiCU1aLvq3PT1OZttPAso5Npjj5RslAWiC+2CP/g+zJgqegPuopVfdgotY9GMB99+naONk37JPlHOTSDSI5dpxcAr3ka92cnOHGS5f6dADb+lZ4b/qgPHqANy8cByVIOJYJx4fwtMZzuiNE7XGOqVAPZTwtpGUeFdB4j1ct+Y2PyKS8lbdl9d/s8bKXHK03KDef0/mUsW8X8C1iyw49gupY8YvJy+0I6q1EVsPY3318/HxUGgZvTJq9DFzTO+ZDbHqz54z2WgYDA96a4cnSqDZ/gysPK2L56+2eAK+2VeAWZFoe311WK5/Vnw+TGNM08pTwE80QuzZdBHPe0dOVtn56EuF1WoKR2PAirqoMYxo74maRg/3Un97GYTAGXYKq/IdYBLwyJFuFu6j1y/ucwG7dOvtlIep0zDfc17+/Ql3ZGa9Q9Y5acKtwXbb7Af6SEMEQqrQE=
+  gem: uuidable
+  on:
+    tags: true
+    repo: flant/uuidable
