@@ -30,6 +30,20 @@ class Project < ActiveRecord::Base
 end
 ```
 
+You can use special methods in migrations:
+```ruby
+class CreateProjects < ActiveRecord::Migration
+    def change
+        create_table :projects do |t|
+            t.uuid
+            #...
+        end
+        # Or
+        add_uuid_column :projects
+    end
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
