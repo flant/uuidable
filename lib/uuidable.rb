@@ -1,5 +1,6 @@
 require 'uuidable/version'
 require 'active_support'
+require 'uuidtools'
 
 # Main module
 module Uuidable

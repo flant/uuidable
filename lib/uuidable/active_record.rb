@@ -3,10 +3,18 @@ module Uuidable
   module ActiveRecord
     extend ActiveSupport::Concern
 
-    class UuidChangeError < Exception; end
+    class UuidChangeError < RuntimeError; end
 
     # ClassMethods
     module ClassMethods
+      def find(*args)
+        if args.first && args.first.is_a?(String) && args.first.match(UUIDTools::UUID_REGEXP)
+          find_by_uuid!(*args)
+        else
+          super
+        end
+      end
+
       def uuidable
         after_initialize { self.uuid = Uuidable.generate_uuid if uuid.blank? }
         validates :uuid, presence: true, uniqueness: true
