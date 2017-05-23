@@ -15,12 +15,14 @@ module Uuidable
         end
       end
 
-      def uuidable
-        after_initialize { self.uuid = Uuidable.generate_uuid if uuid.blank? }
+      def uuidable(as_param: true)
+        after_initialize { self.uuid = Uuidable.generate_uuid if attributes.keys.include?('uuid') && uuid.blank? }
         validates :uuid, presence: true, uniqueness: true
 
-        define_method :to_param do
-          uuid
+        if as_param
+          define_method :to_param do
+            uuid
+          end
         end
 
         define_method :uuid= do |val|
