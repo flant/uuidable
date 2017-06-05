@@ -5,8 +5,7 @@ module Uuidable
 
     class UuidChangeError < RuntimeError; end
 
-    # ClassMethods
-    module ClassMethods
+    module Finder
       def find(*args)
         if args.first && args.first.is_a?(String) && args.first.match(UUIDTools::UUID_REGEXP)
           find_by_uuid!(*args)
@@ -14,6 +13,11 @@ module Uuidable
           super
         end
       end
+    end
+
+    # ClassMethods
+    module ClassMethods
+      include Finder
 
       def uuidable(as_param: true)
         after_initialize { self.uuid = Uuidable.generate_uuid if attributes.keys.include?('uuid') && uuid.blank? }
@@ -41,4 +45,5 @@ end
 
 ActiveSupport.on_load(:active_record) do
   ActiveRecord::Base.send(:include, Uuidable::ActiveRecord)
+  ActiveRecord::Relation.send(:prepend, Uuidable::ActiveRecord::Finder)
 end
