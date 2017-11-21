@@ -7,11 +7,13 @@ module Uuidable
   # Module adds method to table definition
   module TableDefinition
     def uuid(opts = {})
-      index_opts = opts.delete(:index) || {}
+      index_opts = opts.delete(:index)
+      index_opts = {} if index_opts.nil?
+
       column_name = opts.delete(:column_name) || COLUMN_NAME
 
       column column_name, COLUMN_TYPE, COLUMN_OPTIONS.merge(opts)
-      index column_name, INDEX_OPTIONS.merge(index_opts) unless index_opts == false
+      index column_name, INDEX_OPTIONS.merge(index_opts) if index_opts
     end
   end
 
@@ -25,7 +27,7 @@ module Uuidable
 
       add_column table_name, column_name, COLUMN_TYPE, COLUMN_OPTIONS.merge(opts)
 
-      add_uuid_index(table_name, index_opts.merge(column_name: column_name)) unless index_opts.nil?
+      add_uuid_index(table_name, index_opts.merge(column_name: column_name)) if index_opts
     end
 
     def add_uuid_index(table_name, opts = {})
