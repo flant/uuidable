@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    uuidable (0.2.2)
+    uuidable (0.2.3)
       activerecord (>= 4.2, < 6.0)
       uuidtools (>= 2.1, < 3)
 
