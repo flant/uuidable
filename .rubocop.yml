@@ -1,5 +1,8 @@
-Metrics/LineLength:
-  Max: 120
+AllCops:
+  NewCops: disable
+
+Layout/LineLength:
+  Max: 140
 
 Metrics/CyclomaticComplexity:
   Max: 10
