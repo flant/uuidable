@@ -1,4 +1,6 @@
-# Uuidable [![Build Status](https://travis-ci.org/flant/uuidable.svg?branch=master)](https://travis-ci.org/flant/uuidable)
+# Uuidable
+
+[![Build](https://github.com/flant/uuidable/actions/workflows/ruby.yml/badge.svg)](https://github.com/flant/uuidable/actions/workflows/ruby.yml) [![Gem Version](https://badge.fury.io/rb/uuidable.svg)](https://badge.fury.io/rb/uuidable)
 
 With this gem you can use UUID instead of id in routes. But id is still primary key.
 
