@@ -21,7 +21,7 @@ module Uuidable
     module ClassMethods
       include Finder
 
-      def uuidable(as_param: true)
+      def uuidable(as_param: true)  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         columns.select { |c| c.type == :binary && c.limit == 16 && c.name.include?('uuid') }.each do |column|
           attribute column.name.to_sym, MySQLBinUUID::Type.new
         end
