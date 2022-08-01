@@ -65,7 +65,7 @@ module Uuidable
         uuid_columns = connection.columns(table_name).select do |column|
           column.name.include?('uuid') &&
             column.type == :binary &&
-            column.sql_type_metadata.limit == 36 &&
+            column.limit == 36 &&
             !skip.include?("#{table_name}.#{column.name}")
         end
 
@@ -94,7 +94,7 @@ module Uuidable
         uuid_columns = connection.columns(table_name).select do |column|
           column.name.include?('uuid') &&
             column.type == :binary &&
-            column.sql_type_metadata.limit == 16
+            column.limit == 16
         end
 
         next if uuid_columns.blank?

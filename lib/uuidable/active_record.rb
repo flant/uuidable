@@ -21,9 +21,16 @@ module Uuidable
     module ClassMethods
       include Finder
 
-      def uuidable(as_param: true)  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-        columns.select { |c| c.type == :binary && c.limit == 16 && c.name.include?('uuid') }.each do |column|
-          attribute column.name.to_sym, MySQLBinUUID::Type.new
+      def uuidable(as_param: true) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        # Configure all uuid columns for MySQL. Database may not be connected (i.e. on assets precompile), so we must supress errors.
+        conn_config = respond_to?(:connection_db_config) ? connection_db_config.configuration_hash : connection_config
+        if conn_config[:adapter].include?('mysql')
+          begin
+            columns.select { |c| c.type == :binary && c.limit == 16 && c.name.include?('uuid') }.each do |column|
+              attribute column.name.to_sym, MySQLBinUUID::Type.new
+            end
+          rescue ::ActiveRecord::ConnectionNotEstablished, Mysql2::Error::ConnectionError # rubocop:disable Lint/SuppressedException
+          end
         end
 
         after_initialize { self.uuid = Uuidable.generate_uuid if attributes.keys.include?('uuid') && uuid.blank? }
