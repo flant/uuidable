@@ -2,11 +2,15 @@
 
 module Uuidable
   module V1MigrationHelpers
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/AbcSize
 
     # Will create uuid columns with new type, move data from pre-v1 column and then move pre-v1 to *__old.
     # WARNING: will only work on MySQL 8+.
     def uuidable_migrate_uuid_columns_to_v1(table_name, **columns)
+      columns = columns.stringify_keys.slice(connection.columns(table_name).select { |c| valid_column_for_migration?(c) }.map(&:name))
+
+      return unless columns.any?
+
       change_table table_name, bulk: true do |t|
         columns.each do |column, options|
           t.column :"#{column}_new", :binary, **COLUMN_OPTIONS.merge(options).merge(after: column)
@@ -57,16 +61,13 @@ module Uuidable
       end
     end
 
-    def uuidable_migrate_all_pre_v1_uuid_columns!(skip: nil)
-      skip = Array.wrap(skip).each(&:to_s)
+    def uuidable_migrate_all_pre_v1_uuid_columns!
+      # skip = Array.wrap(skip).each(&:to_s)
 
       tables.each do |table_name|
         indexes = indexes(table_name)
         uuid_columns = connection.columns(table_name).select do |column|
-          column.name.include?('uuid') &&
-            column.type == :binary &&
-            column.limit == 36 &&
-            !skip.include?("#{table_name}.#{column.name}")
+          valid_column_for_migration?(column)
         end
 
         next if uuid_columns.blank?
@@ -122,6 +123,14 @@ module Uuidable
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/AbcSize
+
+    def valid_column_for_migration?(column)
+      column.name.include?('uuid') &&
+        !column.name.include?('__old') &&
+        column.type == :binary &&
+        column.limit == 36 &&
+        !skip.include?("#{table_name}.#{column.name}")
+    end
   end
 end

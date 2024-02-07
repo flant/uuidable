@@ -29,7 +29,7 @@ module Uuidable
             columns.select { |c| c.type == :binary && c.limit == 16 && c.name.include?('uuid') }.each do |column|
               attribute column.name.to_sym, MySQLBinUUID::Type.new
             end
-          rescue ::ActiveRecord::ConnectionNotEstablished, Mysql2::Error::ConnectionError # rubocop:disable Lint/SuppressedException
+          rescue ::ActiveRecord::ConnectionNotEstablished, Mysql2::Error::ConnectionError, ::ActiveRecord::NoDatabaseError # rubocop:disable Lint/SuppressedException
           end
         end
 
