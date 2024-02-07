@@ -33,7 +33,11 @@ module Uuidable
           end
         end
 
-        after_initialize { self.uuid = Uuidable.generate_uuid if attributes.keys.include?('uuid') && uuid.blank? }
+        after_initialize do
+          self.uuid = Uuidable.generate_uuid if attributes.keys.include?('uuid') && uuid.blank?
+          self.uuid__old = uuid if respond_to?(:uuid__old)
+        end
+
         validates :uuid, presence: true, uniqueness: true, if: :uuid_changed?
 
         if as_param
