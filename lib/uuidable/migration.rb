@@ -14,8 +14,8 @@ module Uuidable
 
       column_name ||= opts.delete(:column_name)
 
-      column column_name, COLUMN_TYPE, COLUMN_OPTIONS.merge(opts)
-      index column_name, INDEX_OPTIONS.merge(index_opts) if index_opts
+      column column_name, COLUMN_TYPE, **COLUMN_OPTIONS.merge(opts)
+      index column_name, **INDEX_OPTIONS.merge(index_opts) if index_opts
     end
   end
 
@@ -27,7 +27,7 @@ module Uuidable
 
       column_name ||= opts.delete(:column_name)
 
-      add_column table_name, column_name, COLUMN_TYPE, COLUMN_OPTIONS.merge(opts)
+      add_column table_name, column_name, COLUMN_TYPE, **COLUMN_OPTIONS.merge(opts)
 
       add_uuid_index(table_name, index_opts.merge(column_name: column_name)) if index_opts
     end
@@ -35,7 +35,7 @@ module Uuidable
     def add_uuid_index(table_name, opts = {})
       column_name = opts.delete(:column_name) || COLUMN_NAME
 
-      add_index table_name, column_name, INDEX_OPTIONS.merge(opts)
+      add_index table_name, column_name, **INDEX_OPTIONS.merge(opts)
     end
   end
 end

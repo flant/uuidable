@@ -9,7 +9,7 @@ module Uuidable
     def uuidable_migrate_uuid_columns_to_v1(table_name, **columns)
       change_table table_name, bulk: true do |t|
         columns.each do |column, options|
-          t.column :"#{column}_new", :binary, COLUMN_OPTIONS.merge(options).merge(after: column)
+          t.column :"#{column}_new", :binary, **COLUMN_OPTIONS.merge(options).merge(after: column)
         end
       end
 

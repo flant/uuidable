@@ -22,12 +22,12 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.7'
 
-  spec.add_development_dependency 'bundler', '~> 1.11'
+  spec.add_development_dependency 'bundler', '~> 2.4'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'travis', '~> 1.8', '>= 1.8.2'
 
-  spec.add_dependency 'activerecord', '>= 4.2', '< 7.1'
+  spec.add_dependency 'activerecord', '>= 4.2', '< 7.2'
   spec.add_dependency 'mysql-binuuid-rails', '>= 1.3', '< 2'
   spec.add_dependency 'uuidtools', '>= 2.1', '< 3'
 end
