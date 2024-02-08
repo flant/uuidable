@@ -17,6 +17,8 @@ module Uuidable
 
       return if uuid_columns.blank?
 
+      indexes = indexes_with_columns(table_name, uuid_columns)
+
       change_table table_name, bulk: true do |t|
         uuid_columns.each do |column|
           options = columns_options[column.name] || { null: column.null }
@@ -36,21 +38,30 @@ module Uuidable
 
       execute "UPDATE `#{table_name}` SET #{update}"
 
-      # bulk will not rename indexes so we could just reindex them
       change_table table_name, bulk: true do |t|
         uuid_columns.each do |column|
           t.rename column.name, :"#{column.name}#{OLD_POSTFIX}"
           t.rename :"#{column.name}#{NEW_POSTFIX}", column.name
         end
+
+        indexes.each do |ind|
+          t.remove_index name: ind.name
+        end
       end
 
-      # reindex indexes
-      connection.execute "OPTIMIZE TABLE `#{table_name}`"
+      # recreate indexes with new column
+      change_table table_name, bulk: true do |t|
+        indexes.each do |ind|
+          t.index ind.columns, name: ind.name, unique: ind.unique
+        end
+      end
     end
 
     # WARNING: will only work until *__old columns is not deleted!
     def uuidable_rollback_uuid_columns_from_v1(table_name, *columns)
       columns.map!(&:to_s)
+      indexes = indexes(table_name)
+
       uuid_columns = connection.columns(table_name).select do |column|
         (columns.blank? || columns.include?(column.name)) &&
         valid_column_for_migration?(column, limit: 16)
@@ -58,10 +69,16 @@ module Uuidable
 
       return if uuid_columns.blank?
 
+      indexes = indexes_with_columns(table_name, uuid_columns)
+
       change_table table_name, bulk: true do |t|
         uuid_columns.each do |column|
           t.rename column.name, :"#{column.name}#{NEW_POSTFIX}"
           t.rename :"#{column.name}#{OLD_POSTFIX}", column.name
+        end
+
+        indexes.each do |ind|
+          t.remove_index name: ind.name
         end
       end
 
@@ -69,10 +86,11 @@ module Uuidable
         uuid_columns.each do |column|
           t.remove :"#{column.name}#{NEW_POSTFIX}"
         end
-      end
 
-      # reindex indexes
-      connection.execute "OPTIMIZE TABLE `#{table_name}`"
+        indexes.each do |ind|
+          t.index name: ind.name, unique: ind.unique
+        end
+      end
     end
 
     def uuidable_migrate_all_pre_v1_uuid_columns!
@@ -115,6 +133,10 @@ module Uuidable
           column.type == :binary &&
           column.limit == limit
         ))
+    end
+
+    def indexes_with_columns(table_name, columns)
+      indexes(table_name).select { |ind| (ind.columns & columns.map(&:name)).any? }
     end
   end
 end
