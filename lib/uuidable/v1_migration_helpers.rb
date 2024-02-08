@@ -1,106 +1,89 @@
 # frozen_string_literal: true
 
+# rubocop:disable all
 module Uuidable
   module V1MigrationHelpers
-    # rubocop:disable Metrics/AbcSize
+    NEW_POSTFIX = '__new'
+    OLD_POSTFIX = '__old'
 
     # Will create uuid columns with new type, move data from pre-v1 column and then move pre-v1 to *__old.
     # WARNING: will only work on MySQL 8+.
-    def uuidable_migrate_uuid_columns_to_v1(table_name, **columns)
-      columns = columns.stringify_keys.slice(connection.columns(table_name).select { |c| valid_column_for_migration?(c) }.map(&:name))
+    def uuidable_migrate_uuid_columns_to_v1(table_name, columns_options = {}, **opts)
+      columns_options.stringify_keys!
+      uuid_columns = connection.columns(table_name).select do |column|
+        (columns_options.blank? || columns_options.key?(column.name)) &&
+          valid_column_for_migration?(column, opts)
+      end
 
-      return unless columns.any?
+      return if uuid_columns.blank?
 
       change_table table_name, bulk: true do |t|
-        columns.each do |column, options|
-          t.column :"#{column}_new", :binary, **COLUMN_OPTIONS.merge(options).merge(after: column)
+        uuid_columns.each do |column|
+          options = columns_options[column.name] || { null: column.null }
+          t.column :"#{column.name}#{NEW_POSTFIX}", :binary, **COLUMN_OPTIONS.merge(options).merge(after: column.name)
         end
       end
 
-      update = columns.map do |column, _opts|
+      update = uuid_columns.map do |column, _opts|
         <<~SQL
-          `#{table_name}`.`#{column}_new` = IF(
-            IS_UUID(`#{table_name}`.`#{column}`),
-            UUID_TO_BIN(`#{table_name}`.`#{column}`),
-            `#{table_name}`.`#{column}`
+          `#{table_name}`.`#{column.name}#{NEW_POSTFIX}` = IF(
+            IS_UUID(`#{table_name}`.`#{column.name}`),
+            UUID_TO_BIN(`#{table_name}`.`#{column.name}`),
+            `#{table_name}`.`#{column.name}`
           )
         SQL
       end.join(', ')
 
       execute "UPDATE `#{table_name}` SET #{update}"
 
-      # we can't use bulk because of automatic index rename
-      change_table table_name, bulk: false do |t|
-        columns.each do |column, _options|
-          t.rename column, :"#{column}__old"
-          t.rename :"#{column}_new", column
+      # bulk will not rename indexes so we could just reindex them
+      change_table table_name, bulk: true do |t|
+        uuid_columns.each do |column|
+          t.rename column.name, :"#{column.name}#{OLD_POSTFIX}"
+          t.rename :"#{column.name}#{NEW_POSTFIX}", column.name
         end
       end
+
+      # reindex indexes
+      connection.execute "OPTIMIZE TABLE `#{table_name}`"
     end
 
     # WARNING: will only work until *__old columns is not deleted!
     def uuidable_rollback_uuid_columns_from_v1(table_name, *columns)
-      # we can't use bulk because of automatic index rename
-      change_table table_name, bulk: false do |t|
-        columns.each do |column|
-          t.rename column, :"#{column}_new"
-          t.rename :"#{column}__old", column
+      columns.map!(&:to_s)
+      uuid_columns = connection.columns(table_name).select do |column|
+        (columns.blank? || columns.include?(column.name)) &&
+        valid_column_for_migration?(column, limit: 16)
+      end
+
+      return if uuid_columns.blank?
+
+      change_table table_name, bulk: true do |t|
+        uuid_columns.each do |column|
+          t.rename column.name, :"#{column.name}#{NEW_POSTFIX}"
+          t.rename :"#{column.name}#{OLD_POSTFIX}", column.name
         end
       end
 
       change_table table_name, bulk: true do |t|
-        columns.each do |column|
-          indexes(table_name).each do |ind|
-            next unless ind.columns.include?("#{column}_new")
-
-            t.remove_index name: ind.name
-          end
-
-          t.remove :"#{column}_new"
+        uuid_columns.each do |column|
+          t.remove :"#{column.name}#{NEW_POSTFIX}"
         end
       end
+
+      # reindex indexes
+      connection.execute "OPTIMIZE TABLE `#{table_name}`"
     end
 
     def uuidable_migrate_all_pre_v1_uuid_columns!
-      # skip = Array.wrap(skip).each(&:to_s)
-
       tables.each do |table_name|
-        indexes = indexes(table_name)
-        uuid_columns = connection.columns(table_name).select do |column|
-          valid_column_for_migration?(column)
-        end
-
-        next if uuid_columns.blank?
-
-        migrate_params = uuid_columns.map do |column|
-          [column.name.to_sym, { null: column.null }]
-        end.to_h
-
-        uuidable_migrate_uuid_columns_to_v1 table_name, **migrate_params
-
-        change_table table_name, bulk: true do |t|
-          uuid_columns.each do |column|
-            indexes.each do |ind|
-              next unless ind.columns.include?(column.name)
-
-              t.index ind.columns, name: ind.name, unique: ind.unique
-            end
-          end
-        end
+        uuidable_migrate_uuid_columns_to_v1 table_name
       end
     end
 
     def uuidable_rollback_all_pre_v1_uuid_columns!
       tables.each do |table_name|
-        uuid_columns = connection.columns(table_name).select do |column|
-          column.name.include?('uuid') &&
-            column.type == :binary &&
-            column.limit == 16
-        end
-
-        next if uuid_columns.blank?
-
-        uuidable_rollback_uuid_columns_from_v1 table_name, *uuid_columns.map(&:name)
+        uuidable_rollback_uuid_columns_from_v1 table_name
       end
     end
 
@@ -110,7 +93,7 @@ module Uuidable
         indexes = indexes(table_name)
         change_table table_name, bulk: true do |t|
           connection.columns(table_name).each do |column|
-            next unless column.name.include?('uuid__old')
+            next unless column.name.include?(OLD_POSTFIX)
 
             indexes.each do |ind|
               next unless ind.columns.include?(column.name)
@@ -123,14 +106,16 @@ module Uuidable
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize
 
-    def valid_column_for_migration?(column)
+    def valid_column_for_migration?(column, limit: 36, skip_type_check: false)
       column.name.include?('uuid') &&
-        !column.name.include?('__old') &&
-        column.type == :binary &&
-        column.limit == 36 &&
-        !skip.include?("#{table_name}.#{column.name}")
+        !column.name.include?(NEW_POSTFIX) &&
+        !column.name.include?(OLD_POSTFIX) &&
+        (skip_type_check || (
+          column.type == :binary &&
+          column.limit == limit
+        ))
     end
   end
 end
+# rubocop:enable all
