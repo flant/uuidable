@@ -12,7 +12,7 @@ module Uuidable
       columns_options.stringify_keys!
       uuid_columns = connection.columns(table_name).select do |column|
         (columns_options.blank? || columns_options.key?(column.name)) &&
-          valid_column_for_migration?(column, opts)
+          valid_column_for_migration?(column, **opts)
       end
 
       return if uuid_columns.blank?
