@@ -25,7 +25,7 @@ module Uuidable
         # Configure all uuid columns for MySQL. Database may not be connected (i.e. on assets precompile), so we must supress errors.
         conn_config = respond_to?(:connection_db_config) ? connection_db_config.configuration_hash : connection_config
 
-        if conn_config[:adapter].include?('mysql') && schema_loaded?
+        if conn_config[:adapter].include?('mysql') && connection.data_source_exists?(table_name)
           begin
             columns.select { |c| c.type == :binary && c.limit == 16 && c.name.include?('uuid') }.each do |column|
               attribute column.name.to_sym, MySQLBinUUID::Type.new
