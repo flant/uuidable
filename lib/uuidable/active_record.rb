@@ -30,16 +30,17 @@ module Uuidable
             columns.select { |c| c.type == :binary && c.limit == 16 && c.name.include?('uuid') }.each do |column|
               attribute column.name.to_sym, MySQLBinUUID::Type.new
             end
+
+            include V1ModelMigration if columns.any? { |c| c.name.include?(V1MigrationHelpers::OLD_POSTFIX) }
           rescue ::ActiveRecord::ConnectionNotEstablished, Mysql2::Error::ConnectionError, ::ActiveRecord::NoDatabaseError # rubocop:disable Lint/SuppressedException
           end
         end
 
         after_initialize do
           self.uuid = Uuidable.generate_uuid if attributes.keys.include?('uuid') && uuid.blank?
-          self.uuid__old = uuid if respond_to?(:uuid__old)
         end
 
-        validates :uuid, presence: true, uniqueness: true, if: :uuid_changed?
+        validates :uuid, presence: true, uniqueness: true, if: -> { try :uuid_changed? }
 
         if as_param
           define_method :to_param do
