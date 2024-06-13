@@ -17,4 +17,5 @@ end
 
 require 'uuidable/migration'
 require 'uuidable/v1_migration_helpers'
+require 'uuidable/v1_model_migration'
 require 'uuidable/active_record'
