@@ -88,7 +88,7 @@ module Uuidable
         end
 
         indexes.each do |ind|
-          t.index name: ind.name, unique: ind.unique
+          t.index ind.columns, name: ind.name, unique: ind.unique
         end
       end
     end
