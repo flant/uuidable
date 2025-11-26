@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    uuidable (0.2.7)
-      activerecord (>= 4.2, < 7.2)
+    uuidable (0.2.8)
+      activerecord (>= 4.2, < 8)
       uuidtools (>= 2.1, < 3)
 
 GEM
@@ -112,7 +112,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.11)
   rake (~> 13.0)
   rspec (~> 3.0)
   rubocop
@@ -120,4 +119,4 @@ DEPENDENCIES
   uuidable!
 
 BUNDLED WITH
-   1.17.3
+   2.7.2
