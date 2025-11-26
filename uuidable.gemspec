@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'travis', '~> 1.8', '>= 1.8.2'
 
-  spec.add_dependency 'activerecord', '>= 4.2', '< 8.0'
+  spec.add_dependency 'activerecord', '>= 4.2', '< 8.2'
   spec.add_dependency 'mysql-binuuid-rails', '>= 1.3', '< 2'
   spec.add_dependency 'uuidtools', '>= 2.1', '< 3'
 end
