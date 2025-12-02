@@ -29,5 +29,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activerecord', '>= 4.2', '< 8.2'
   spec.add_dependency 'mysql-binuuid-rails', '>= 1.3', '< 2'
-  spec.add_dependency 'uuidtools', '>= 2.1', '< 3'
+  spec.add_dependency 'uuidtools', '>= 3.0', '< 4'
 end
